@@ -6,18 +6,22 @@ async function apiFetch<T>(
   options?: RequestInit
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
   
   const token = typeof window !== "undefined" ? localStorage.getItem("bufflab_token") : null;
-  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
 
   const res = await fetch(url, {
+    ...options,
     headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...authHeader,
+      ...headers,
       ...options?.headers,
     },
-    ...options,
   });
 
   if (!res.ok) {
