@@ -201,3 +201,15 @@ export async function updateOrderPayment(
   });
   return res.data;
 }
+
+/** Update a service price */
+export async function updateServicePrice(
+  id: number,
+  price: number
+): Promise<Service> {
+  const res = await apiFetch<{ data: Service }>(`/services/${id}/price`, {
+    method: "PATCH",
+    body: JSON.stringify({ price }),
+  });
+  return res.data;
+}

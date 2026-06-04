@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, PlusCircle, ClipboardList, Sparkles } from "lucide-react";
+import { LayoutDashboard, PlusCircle, ClipboardList, Sparkles, Tags } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -27,6 +27,11 @@ export default function AdminLayout({
       label: "Queue",
       href: "/orders",
       icon: ClipboardList,
+    },
+    {
+      label: "Harga",
+      href: "/services",
+      icon: Tags,
     },
   ];
 
