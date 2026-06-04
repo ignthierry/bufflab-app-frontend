@@ -744,7 +744,7 @@ export default function NewOrder() {
 
             <div className="space-y-1">
               <h4 className="font-display text-base font-extrabold text-brand-primary">Order Berhasil Disimpan!</h4>
-              <p className="text-xs text-zinc-500 font-medium">WhatsApp Bukti Terima (Invoice) telah dikirim.</p>
+              <p className="text-xs text-zinc-500 font-medium">Kirim Bukti Terima (Invoice) ke WhatsApp customer.</p>
             </div>
 
             <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl shadow-inner">
@@ -753,6 +753,23 @@ export default function NewOrder() {
             </div>
 
             <div className="flex flex-col gap-2 pt-2">
+              <a
+                href={getWhatsAppLink(
+                  whatsappNumber,
+                  `Halo *${customerName}*, Terima kasih telah mempercayakan sepatu Anda di Bufflab Clean Shoes Surabaya! 🙏\n\n` +
+                  `Berikut adalah detail pesanan Anda:\n` +
+                  `🧾 No. Invoice: *${createdInvoice}*\n` +
+                  `👟 Item: *${items.map(i => `${i.brand} ${i.model || ""}`).join(", ")}*\n` +
+                  `🛠️ Layanan: *${items.map(i => availableServices.find(s => s.id === i.serviceId)?.service_name).join(", ")}*\n` +
+                  `💰 Total: *${formatRupiah(totalBill)}* (Status: *${paymentStatus === "paid" ? "Lunas" : paymentStatus === "partial" ? `DP ${formatRupiah(parsedAmountPaid)}` : "Belum Bayar"}*)\n\n` +
+                  `Estimasi pengerjaan selesai dalam *3-4* hari kerja. Anda dapat memantau status sepatu Anda melalui link berikut: ${window.location.origin}/invoice/${createdInvoice}`
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors shadow-sm flex items-center justify-center gap-1.5"
+              >
+                💬 Kirim Invoice via WhatsApp
+              </a>
               <Link
                 href={`/invoice/${createdInvoice}`}
                 className="w-full py-2.5 bg-brand-secondary hover:bg-brand-accent text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors shadow-sm"
@@ -764,7 +781,7 @@ export default function NewOrder() {
                   setCreatedInvoice(null);
                   clearDraft();
                 }}
-                className="w-full py-2.5 bg-white hover:bg-zinc-50 text-zinc-600 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors border border-zinc-200 shadow-sm"
+                className="w-full py-2.5 bg-white hover:bg-zinc-50 text-zinc-650 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors border border-zinc-200 shadow-sm"
               >
                 Buat Order Baru Lagi
               </button>
