@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import { 
   Sparkles, 
   Check, 
@@ -113,9 +114,14 @@ export default function PublicInvoice() {
           {/* Shop Header */}
           <div className="flex justify-between items-start pb-6 border-b border-zinc-150">
             <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-brand-secondary">
-                <Sparkles size={16} />
-                <span className="font-display font-extrabold tracking-wider text-sm text-brand-primary">BUFFLAB CLEAN SHOES</span>
+              <div className="relative w-32 h-10 mb-1">
+                <Image 
+                  src="/logo.png" 
+                  alt="Bufflab Logo" 
+                  fill
+                  className="object-contain object-left"
+                  priority
+                />
               </div>
               <p className="text-[9px] text-zinc-400 font-bold tracking-widest uppercase">Surabaya Shoecare Specialist</p>
             </div>

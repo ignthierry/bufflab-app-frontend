@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Sparkles, Lock, Mail, Loader2, ArrowRight } from "lucide-react";
 import { login } from "@/lib/api";
 
@@ -44,14 +45,17 @@ export default function LoginPage() {
         
         {/* Header */}
         <div className="flex flex-col items-center justify-center gap-3 mb-10">
-          <div className="p-3 bg-brand-secondary/10 rounded-2xl border border-brand-secondary/20 text-brand-secondary">
-            <Sparkles size={32} />
+          <div className="relative w-40 h-20 mb-2">
+            <Image 
+              src="/logo.png" 
+              alt="Bufflab Logo" 
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
           <div className="text-center">
-            <h1 className="font-display font-extrabold text-2xl tracking-tight text-brand-primary">
-              BUFFLAB
-            </h1>
-            <p className="text-[11px] text-zinc-400 font-bold tracking-widest uppercase mt-0.5">
+            <p className="text-[11px] text-zinc-400 font-bold tracking-widest uppercase">
               Secure POS Login
             </p>
           </div>

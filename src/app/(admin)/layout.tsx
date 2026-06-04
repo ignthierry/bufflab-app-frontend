@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, PlusCircle, ClipboardList, Sparkles, Tags, LogOut } from "lucide-react";
 
@@ -60,17 +61,15 @@ export default function AdminLayout({
     <div className="flex flex-col min-h-screen bg-background text-foreground font-sans pb-20 md:pb-0 md:pl-64">
       {/* Sidebar for Desktop */}
       <aside className="hidden md:flex flex-col fixed inset-y-0 left-0 w-64 bg-white border-r border-zinc-200/80 p-6 z-30">
-        <div className="flex items-center gap-2.5 mb-8">
-          <div className="p-2 bg-brand-secondary/10 rounded-xl border border-brand-secondary/20 text-brand-secondary">
-            <Sparkles size={24} />
-          </div>
-          <div>
-            <h1 className="font-display font-extrabold text-lg tracking-tight text-brand-primary">
-              BUFFLAB
-            </h1>
-            <p className="text-[10px] text-zinc-400 font-bold tracking-widest uppercase">
-              BOOMS v2.0
-            </p>
+        <div className="flex items-center gap-2 mb-8">
+          <div className="relative w-32 h-12">
+            <Image 
+              src="/logo.png" 
+              alt="Bufflab Logo" 
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
         </div>
 
@@ -119,16 +118,14 @@ export default function AdminLayout({
       {/* Top Header for Mobile */}
       <header className="md:hidden flex items-center justify-between px-6 py-4 bg-white/90 backdrop-blur-md border-b border-zinc-200/80 sticky top-0 z-20">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-brand-secondary/10 rounded-lg border border-brand-secondary/20 text-brand-secondary">
-            <Sparkles size={16} />
-          </div>
-          <div>
-            <h1 className="font-display font-extrabold text-base tracking-tight text-brand-primary">
-              BUFFLAB
-            </h1>
-            <span className="text-[8px] text-zinc-400 uppercase tracking-widest block -mt-1 font-bold">
-              BOOMS
-            </span>
+          <div className="relative w-24 h-8">
+            <Image 
+              src="/logo.png" 
+              alt="Bufflab Logo" 
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
         </div>
 
