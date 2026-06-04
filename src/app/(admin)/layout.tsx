@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, PlusCircle, ClipboardList, Sparkles, Tags } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, PlusCircle, ClipboardList, Sparkles, Tags, LogOut } from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -11,6 +11,27 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("bufflab_token");
+    if (!token) {
+      router.push("/login");
+    } else {
+      setIsAuthorized(true);
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("bufflab_token");
+    localStorage.removeItem("bufflab_user");
+    router.push("/login");
+  };
+
+  if (!isAuthorized) {
+    return null; // Return nothing while checking auth to prevent flash of content
+  }
 
   const navItems = [
     {
@@ -86,6 +107,12 @@ export default function AdminLayout({
               </span>
             </div>
           </div>
+          <button 
+            onClick={handleLogout}
+            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold uppercase tracking-wider rounded-xl transition-colors"
+          >
+            <LogOut size={14} /> Logout
+          </button>
         </div>
       </aside>
 
@@ -106,9 +133,16 @@ export default function AdminLayout({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[9px] text-brand-secondary font-bold bg-brand-secondary/10 border border-brand-secondary/20 px-2.5 py-1 rounded-full uppercase tracking-wider">
+          <span className="hidden sm:inline-block text-[9px] text-brand-secondary font-bold bg-brand-secondary/10 border border-brand-secondary/20 px-2.5 py-1 rounded-full uppercase tracking-wider">
             Surabaya Outlet
           </span>
+          <button 
+            onClick={handleLogout}
+            className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-100"
+            title="Logout"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </header>
 

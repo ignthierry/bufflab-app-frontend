@@ -6,10 +6,15 @@ async function apiFetch<T>(
   options?: RequestInit
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
+  
+  const token = typeof window !== "undefined" ? localStorage.getItem("bufflab_token") : null;
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
+      ...authHeader,
       ...options?.headers,
     },
     ...options,
@@ -210,6 +215,15 @@ export async function updateServicePrice(
   const res = await apiFetch<{ data: Service }>(`/services/${id}/price`, {
     method: "PATCH",
     body: JSON.stringify({ price }),
+  });
+  return res.data;
+}
+
+/** Login */
+export async function login(username: string, password: string): Promise<{ user: any; token: string }> {
+  const res = await apiFetch<{ data: { user: any; token: string } }>("/login", {
+    method: "POST",
+    body: JSON.stringify({ username, password }),
   });
   return res.data;
 }
