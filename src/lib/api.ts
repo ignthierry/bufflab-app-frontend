@@ -189,3 +189,15 @@ export function getWhatsAppLink(
 ): string {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
+
+/** Update an order's payment status */
+export async function updateOrderPayment(
+  id: number,
+  payload: { payment_status: "unpaid" | "partial" | "paid"; amount_paid: number }
+): Promise<Order> {
+  const res = await apiFetch<{ data: Order }>(`/orders/${id}/payment`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  return res.data;
+}

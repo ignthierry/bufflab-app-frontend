@@ -13,7 +13,7 @@ import {
   Filter,
   Loader2
 } from "lucide-react";
-import { fetchOrders, updateOrderStatus, getWhatsAppLink, getPhotoUrl, type Order as ApiOrder } from "@/lib/api";
+import { fetchOrders, updateOrderStatus, updateOrderPayment, getWhatsAppLink, getPhotoUrl, type Order as ApiOrder } from "@/lib/api";
 
 export default function OrdersQueue() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -111,6 +111,25 @@ export default function OrdersQueue() {
     } catch (err: any) {
       console.error("Failed to update status", err);
       alert("Gagal mengubah status: " + (err.message || "Terjadi kesalahan"));
+    }
+  };
+
+  const handlePaymentChange = async (id: number, newStatus: ApiOrder["payment_status"], amountPaid: number) => {
+    try {
+      const updatedOrder = await updateOrderPayment(id, {
+        payment_status: newStatus,
+        amount_paid: amountPaid,
+      });
+
+      setOrders(prev => prev.map(order => {
+        if (order.id === id) {
+          return { ...order, ...updatedOrder };
+        }
+        return order;
+      }));
+    } catch (err: any) {
+      console.error("Failed to update payment status", err);
+      alert("Gagal mengubah status pembayaran: " + (err.message || "Terjadi kesalahan"));
     }
   };
 
@@ -290,6 +309,15 @@ export default function OrdersQueue() {
                     >
                       Invoice
                     </Link>
+
+                    {order.payment_status !== "paid" && (
+                      <button
+                        onClick={() => handlePaymentChange(order.id, "paid", order.total_price)}
+                        className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-brand-ambient active:scale-95 border border-emerald-600"
+                      >
+                        💵 Tandai Lunas
+                      </button>
+                    )}
 
                     {order.order_status === "pending" && (
                       <button
