@@ -27,8 +27,7 @@ interface ShoeItem {
   material: string;
   size: string;
   conditionNotes: string;
-  photoBase64: string; // Compressed
-  photoStats: { originalSizeKb: number; compressedSizeKb: number } | null;
+  photos: { base64: string; originalSizeKb: number; compressedSizeKb: number }[];
   serviceId: number;
 }
 
@@ -56,7 +55,7 @@ export default function NewOrder() {
   const [createdInvoice, setCreatedInvoice] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeItemPhotoIndex, setActiveItemPhotoIndex] = useState<string | null>(null);
+  const [activeUploadItemId, setActiveUploadItemId] = useState<string | null>(null);
 
   // --- Fetch services from API on mount ---
   useEffect(() => {
@@ -141,7 +140,7 @@ export default function NewOrder() {
   // --- UAT-02: Camera Capture & Image Auto-Compression ---
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0 || !activeItemPhotoIndex) return;
+    if (!files || files.length === 0 || !activeUploadItemId) return;
 
     const file = files[0];
     const originalSizeKb = Math.round(file.size / 1024);
@@ -179,11 +178,14 @@ export default function NewOrder() {
           const compressedSizeKb = Math.round(((base64.length - head) * 3) / 4 / 1024);
 
           setItems(prev => prev.map(item => {
-            if (item.id === activeItemPhotoIndex) {
+            if (item.id === activeUploadItemId) {
+              if (item.photos.length >= 3) {
+                alert("Maksimal 3 foto per sepatu.");
+                return item;
+              }
               return {
                 ...item,
-                photoBase64: base64,
-                photoStats: { originalSizeKb, compressedSizeKb }
+                photos: [...item.photos, { base64, originalSizeKb, compressedSizeKb }]
               };
             }
             return item;
@@ -193,11 +195,26 @@ export default function NewOrder() {
       img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
+    // Reset the input value so the same file can be uploaded again if needed
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const triggerPhotoUpload = (itemId: string) => {
-    setActiveItemPhotoIndex(itemId);
+    setActiveUploadItemId(itemId);
     fileInputRef.current?.click();
+  };
+
+  const handleRemovePhoto = (itemId: string, photoIndex: number) => {
+    setItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const newPhotos = [...item.photos];
+        newPhotos.splice(photoIndex, 1);
+        return { ...item, photos: newPhotos };
+      }
+      return item;
+    }));
   };
 
   const totalBill = items.reduce((sum, item) => {
@@ -218,8 +235,7 @@ export default function NewOrder() {
       material: "Canvas",
       size: "",
       conditionNotes: "",
-      photoBase64: "",
-      photoStats: null,
+      photos: [],
       serviceId: defaultServiceId,
     };
     setItems([...items, newItem]);
@@ -268,7 +284,7 @@ export default function NewOrder() {
           material: item.material,
           size: item.size ? parseInt(item.size) : null,
           initial_condition_notes: item.conditionNotes,
-          photo_base64: item.photoBase64,
+          photo_base64_array: item.photos.map(p => p.base64),
         }))
       };
       const result = await createOrder(payload);
@@ -444,36 +460,52 @@ export default function NewOrder() {
               </div>
 
               {/* Photo Upload Container */}
-              <div className="flex flex-col items-center justify-center border border-dashed border-zinc-300 rounded-2xl p-4 bg-zinc-50/50 relative overflow-hidden group">
-                {item.photoBase64 ? (
-                  <div className="w-full flex flex-col items-center gap-2">
-                    <img 
-                      src={item.photoBase64} 
-                      alt="Kondisi awal sepatu" 
-                      className="max-h-48 object-contain rounded-xl border border-zinc-200"
-                    />
-                    <div className="flex items-center gap-4 text-[9px] font-bold text-zinc-400 uppercase tracking-wider">
-                      <span>Asli: {item.photoStats?.originalSizeKb} KB</span>
-                      <span className="text-brand-secondary">Kompresi: {item.photoStats?.compressedSizeKb} KB</span>
-                    </div>
+              <div className="flex flex-col border border-dashed border-zinc-300 rounded-2xl p-4 bg-zinc-50/50 relative overflow-hidden group space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-zinc-600">Foto Kondisi Fisik Sepatu * (Maks. 3)</span>
+                  {item.photos.length < 3 && (
                     <button
                       onClick={() => triggerPhotoUpload(item.id)}
-                      className="mt-1.5 flex items-center gap-1 px-3 py-1.5 bg-white text-zinc-650 font-bold text-xs uppercase rounded-lg border border-zinc-200 hover:text-brand-primary shadow-sm"
+                      className="flex items-center gap-1 px-3 py-1.5 bg-white text-brand-secondary font-bold text-[10px] uppercase rounded-lg border border-zinc-200 hover:border-brand-secondary/50 shadow-sm transition-colors"
                     >
-                      <Camera size={12} /> Ambil Ulang Foto
+                      <Camera size={12} /> Tambah Foto
                     </button>
+                  )}
+                </div>
+
+                {item.photos.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {item.photos.map((photo, pIdx) => (
+                      <div key={pIdx} className="relative group/photo border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                        <img 
+                          src={photo.base64} 
+                          alt={`Kondisi awal sepatu ${pIdx + 1}`} 
+                          className="w-full h-32 object-cover"
+                        />
+                        <button
+                          onClick={() => handleRemovePhoto(item.id, pIdx)}
+                          className="absolute top-1.5 right-1.5 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-sm opacity-0 group-hover/photo:opacity-100 transition-opacity"
+                          title="Hapus Foto"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                        <div className="absolute bottom-0 inset-x-0 bg-black/60 p-1 text-center">
+                          <span className="text-[8px] text-white font-mono block">Asli: {photo.originalSizeKb}KB</span>
+                          <span className="text-[8px] text-green-300 font-mono block">Komp: {photo.compressedSizeKb}KB</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div 
                     onClick={() => triggerPhotoUpload(item.id)}
-                    className="flex flex-col items-center gap-2 text-zinc-550 hover:text-brand-secondary cursor-pointer py-4"
+                    className="flex flex-col items-center justify-center gap-2 text-zinc-550 hover:text-brand-secondary cursor-pointer py-6"
                   >
                     <div className="p-3 bg-white border border-zinc-200 rounded-2xl text-brand-secondary shadow-sm group-hover:scale-105 transition-transform">
                       <Camera size={22} />
                     </div>
-                    <span className="text-xs font-bold">Foto Kondisi Fisik Sepatu *</span>
                     <p className="text-[10px] text-zinc-400 font-medium text-center max-w-[280px]">
-                      UAT-02: Sistem otomatis memperkecil & mengkompresi gambar sebelum dikirim.
+                      UAT-02: Sistem otomatis memperkecil & mengkompresi gambar sebelum dikirim. Upload hingga 3 foto.
                     </p>
                   </div>
                 )}
@@ -594,9 +626,9 @@ export default function NewOrder() {
                   alert("Harap tambahkan minimal 1 sepatu!");
                   return;
                 }
-                const missingFields = items.some(item => !item.brand.trim() || !item.model.trim() || !item.photoBase64);
+                const missingFields = items.some(item => !item.brand.trim() || !item.model.trim() || item.photos.length === 0);
                 if (missingFields) {
-                  alert("Harap lengkapi Brand, Model, dan Foto untuk setiap item!");
+                  alert("Harap lengkapi Brand, Model, dan Foto (min. 1) untuk setiap item!");
                   return;
                 }
                 setStep(3);

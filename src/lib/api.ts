@@ -61,6 +61,8 @@ export interface OrderItem {
   size: number | null;
   initial_condition_notes: string | null;
   photo_path: string | null;
+  photo_paths?: string[] | null;
+  after_photo_paths?: string[] | null;
   service?: Service;
 }
 
@@ -103,7 +105,8 @@ export interface CreateOrderPayload {
     material: string;
     size: number | null;
     initial_condition_notes: string;
-    photo_base64: string;
+    photo_base64?: string;
+    photo_base64_array?: string[];
   }[];
 }
 
@@ -174,11 +177,16 @@ export async function fetchInvoice(invoiceNumber: string): Promise<Order> {
 /** Update an order's status */
 export async function updateOrderStatus(
   id: number,
-  status: Order["order_status"]
+  status: Order["order_status"],
+  items?: { id: number; after_photo_base64_array: string[] }[]
 ): Promise<Order> {
+  const payload: any = { order_status: status };
+  if (items) {
+    payload.items = items;
+  }
   const res = await apiFetch<{ data: Order }>(`/orders/${id}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ order_status: status }),
+    body: JSON.stringify(payload),
   });
   return res.data;
 }

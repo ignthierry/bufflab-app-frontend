@@ -11,7 +11,10 @@ import {
   CheckCircle2, 
   ExternalLink,
   Filter,
-  Loader2
+  Loader2,
+  Camera,
+  Trash2,
+  X
 } from "lucide-react";
 import { fetchOrders, updateOrderStatus, updateOrderPayment, getWhatsAppLink, getPhotoUrl, type Order as ApiOrder } from "@/lib/api";
 
@@ -29,6 +32,12 @@ export default function OrdersQueue() {
     whatsapp: string;
     message: string;
   } | null>(null);
+
+  // Ready Modal states
+  const [readyModalOrder, setReadyModalOrder] = useState<ApiOrder | null>(null);
+  const [afterPhotos, setAfterPhotos] = useState<Record<number, string[]>>({});
+  const readyFileInputRef = useRef<HTMLInputElement>(null);
+  const [activeUploadItemId, setActiveUploadItemId] = useState<number | null>(null);
 
   // --- Fetch orders from API ---
   const loadOrders = useCallback(async (status?: string, search?: string) => {
@@ -78,9 +87,9 @@ export default function OrdersQueue() {
     };
   }, []);
 
-  const handleStatusChange = async (id: number, newStatus: ApiOrder["order_status"]) => {
+  const handleStatusChange = async (id: number, newStatus: ApiOrder["order_status"], additionalItemsData?: any[]) => {
     try {
-      const updatedOrder = await updateOrderStatus(id, newStatus);
+      const updatedOrder = await updateOrderStatus(id, newStatus, additionalItemsData);
 
       setOrders(prev => prev.map(order => {
         if (order.id === id) {
@@ -112,6 +121,99 @@ export default function OrdersQueue() {
       console.error("Failed to update status", err);
       alert("Gagal mengubah status: " + (err.message || "Terjadi kesalahan"));
     }
+  };
+  // --- Camera Logic for After Photos ---
+  const handleAfterPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || activeUploadItemId === null) return;
+
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        const MAX_DIM = 800;
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const base64 = canvas.toDataURL("image/jpeg", 0.7);
+          
+          setAfterPhotos(prev => {
+            const existing = prev[activeUploadItemId] || [];
+            if (existing.length >= 3) {
+              alert("Maksimal 3 foto per sepatu.");
+              return prev;
+            }
+            return {
+              ...prev,
+              [activeUploadItemId]: [...existing, base64]
+            };
+          });
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    if (readyFileInputRef.current) {
+      readyFileInputRef.current.value = "";
+    }
+  };
+
+  const triggerAfterPhotoUpload = (itemId: number) => {
+    setActiveUploadItemId(itemId);
+    readyFileInputRef.current?.click();
+  };
+
+  const handleRemoveAfterPhoto = (itemId: number, photoIndex: number) => {
+    setAfterPhotos(prev => {
+      const existing = prev[itemId] || [];
+      const newPhotos = [...existing];
+      newPhotos.splice(photoIndex, 1);
+      return { ...prev, [itemId]: newPhotos };
+    });
+  };
+
+  const submitReadyModal = async () => {
+    if (!readyModalOrder) return;
+    
+    // Validasi: Pastikan setidaknya ada 1 foto untuk setiap item
+    if (readyModalOrder.items) {
+      for (const item of readyModalOrder.items) {
+        const photos = afterPhotos[item.id] || [];
+        if (photos.length === 0) {
+          alert(`Harap unggah minimal 1 foto sesudah cuci untuk sepatu ${item.brand} ${item.model || ''}`);
+          return;
+        }
+      }
+    }
+
+    const payloadItems = readyModalOrder.items?.map(item => ({
+      id: item.id,
+      after_photo_base64_array: afterPhotos[item.id] || []
+    })) || [];
+
+    await handleStatusChange(readyModalOrder.id, "ready", payloadItems);
+    setReadyModalOrder(null);
+    setAfterPhotos({});
   };
 
   const handlePaymentChange = async (id: number, newStatus: ApiOrder["payment_status"], amountPaid: number) => {
@@ -330,7 +432,10 @@ export default function OrdersQueue() {
 
                     {order.order_status === "processing" && (
                       <button
-                        onClick={() => handleStatusChange(order.id, "ready")}
+                        onClick={() => {
+                          setReadyModalOrder(order);
+                          setAfterPhotos({});
+                        }}
                         className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-secondary hover:bg-brand-accent text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-brand-ambient active:scale-95"
                       >
                         <Check size={12} /> Set Siap Ambil
@@ -392,6 +497,89 @@ export default function OrdersQueue() {
           </div>
         </div>
       )}
+      {/* Ready Modal for Uploading After Photos */}
+      {readyModalOrder && (
+        <div className="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white border border-zinc-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-brand-ambient animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start border-b border-zinc-150 pb-3">
+              <div>
+                <h3 className="font-display font-bold text-lg text-brand-primary">Foto Sesudah Cuci</h3>
+                <p className="text-xs text-zinc-500 font-medium">No. Invoice: {readyModalOrder.invoice_number}</p>
+              </div>
+              <button 
+                onClick={() => setReadyModalOrder(null)}
+                className="text-zinc-400 hover:text-zinc-600 p-1 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {readyModalOrder.items?.map((item, idx) => {
+                const photos = afterPhotos[item.id] || [];
+                return (
+                  <div key={item.id} className="p-4 bg-zinc-50 border border-zinc-200 rounded-xl space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-sm text-brand-primary">#{idx + 1} {item.brand} {item.model}</span>
+                      {photos.length < 3 && (
+                        <button
+                          onClick={() => triggerAfterPhotoUpload(item.id)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-white text-brand-secondary font-bold text-[10px] uppercase rounded-lg border border-zinc-200 hover:border-brand-secondary/50 shadow-sm transition-colors"
+                        >
+                          <Camera size={12} /> Tambah Foto
+                        </button>
+                      )}
+                    </div>
+                    
+                    {photos.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {photos.map((photo, pIdx) => (
+                          <div key={pIdx} className="relative group border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                            <img src={photo} alt="Setelah cuci" className="w-full h-24 object-cover" />
+                            <button
+                              onClick={() => handleRemoveAfterPhoto(item.id, pIdx)}
+                              className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div 
+                        onClick={() => triggerAfterPhotoUpload(item.id)}
+                        className="flex flex-col items-center justify-center gap-2 text-zinc-500 hover:text-brand-secondary cursor-pointer py-6 bg-white border border-dashed border-zinc-300 rounded-xl transition-colors"
+                      >
+                        <Camera size={20} />
+                        <span className="text-[10px] font-medium">Klik untuk upload foto (Wajib)</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={submitReadyModal}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-brand-secondary hover:bg-brand-accent active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-brand-ambient"
+              >
+                Simpan & Update Status
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden input for after photos */}
+      <input 
+        type="file" 
+        accept="image/*" 
+        capture="environment"
+        ref={readyFileInputRef} 
+        onChange={handleAfterPhotoUpload}
+        className="hidden" 
+      />
     </div>
   );
 }

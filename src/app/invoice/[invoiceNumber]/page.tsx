@@ -11,9 +11,10 @@ import {
   Calendar,
   AlertCircle,
   Shirt,
-  Image as ImageIcon,
+  ImageIcon,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  X
 } from "lucide-react";
 import { fetchInvoice, getPhotoUrl, getWhatsAppLink, type Order } from "@/lib/api";
 
@@ -24,6 +25,7 @@ export default function PublicInvoice() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!invoiceNumber) return;
@@ -214,20 +216,8 @@ export default function PublicInvoice() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="col-span-1 border border-zinc-200 rounded-xl overflow-hidden aspect-square flex items-center justify-center bg-white shadow-sm">
-                        {photoUrl ? (
-                          <img 
-                            src={photoUrl} 
-                            alt={`${item.brand} ${item.model || ""}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <ImageIcon className="text-zinc-350" size={24} />
-                        )}
-                      </div>
-
-                      <div className="col-span-2 text-[11px] space-y-1.5">
+                    <div className="text-[11px] space-y-2.5">
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
                           <span className="text-zinc-400 block text-[9px] uppercase tracking-wider font-bold">Warna & Bahan</span>
                           <span className="font-bold text-zinc-650">{item.color} • {item.material}</span>
@@ -236,15 +226,63 @@ export default function PublicInvoice() {
                           <span className="text-zinc-400 block text-[9px] uppercase tracking-wider font-bold">Layanan</span>
                           <span className="font-bold text-brand-secondary">{item.service?.service_name || "-"}</span>
                         </div>
-                        {item.initial_condition_notes && (
-                          <div>
-                            <span className="text-zinc-400 block text-[9px] uppercase tracking-wider font-bold">Catatan Kondisi</span>
-                            <p className="text-zinc-550 italic font-medium leading-relaxed">
-                              &ldquo;{item.initial_condition_notes}&rdquo;
-                            </p>
-                          </div>
-                        )}
                       </div>
+                      
+                      {item.initial_condition_notes && (
+                        <div>
+                          <span className="text-zinc-400 block text-[9px] uppercase tracking-wider font-bold">Catatan Kondisi</span>
+                          <p className="text-zinc-550 italic font-medium leading-relaxed">
+                            &ldquo;{item.initial_condition_notes}&rdquo;
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-3 border-t border-zinc-200/60 space-y-4">
+                      <div>
+                        <span className="text-zinc-400 block text-[9px] uppercase tracking-wider font-bold mb-2">Foto Sebelum Cuci</span>
+                        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                          {item.photo_paths && item.photo_paths.length > 0 ? (
+                            item.photo_paths.map((p, i) => (
+                              <img 
+                                key={i} 
+                                src={getPhotoUrl(p) || ""} 
+                                alt="Sebelum cuci" 
+                                className="w-24 h-24 object-cover rounded-xl border border-zinc-200 shrink-0 shadow-sm cursor-pointer hover:opacity-90 transition-opacity" 
+                                onClick={() => setSelectedImage(getPhotoUrl(p) || "")}
+                              />
+                            ))
+                          ) : photoUrl ? (
+                            <img 
+                              src={photoUrl} 
+                              alt={`${item.brand} sebelum cuci`} 
+                              className="w-24 h-24 object-cover rounded-xl border border-zinc-200 shrink-0 shadow-sm cursor-pointer hover:opacity-90 transition-opacity" 
+                              onClick={() => setSelectedImage(photoUrl)}
+                            />
+                          ) : (
+                            <div className="w-24 h-24 border border-zinc-200 rounded-xl flex items-center justify-center bg-white shrink-0 text-zinc-350 shadow-sm">
+                              <ImageIcon size={20} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {item.after_photo_paths && item.after_photo_paths.length > 0 && (
+                        <div>
+                          <span className="text-brand-secondary block text-[9px] uppercase tracking-wider font-bold mb-2">Foto Sesudah Cuci ✨</span>
+                          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                            {item.after_photo_paths.map((p, i) => (
+                              <img 
+                                key={i} 
+                                src={getPhotoUrl(p) || ""} 
+                                alt="Sesudah cuci" 
+                                className="w-24 h-24 object-cover rounded-xl border border-zinc-200 shrink-0 shadow-sm ring-1 ring-brand-secondary/20 cursor-pointer hover:opacity-90 transition-opacity" 
+                                onClick={() => setSelectedImage(getPhotoUrl(p) || "")}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -318,6 +356,27 @@ export default function PublicInvoice() {
           </p>
         </div>
       </div>
+
+      {/* Image Viewer Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button 
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-zinc-300 p-2 bg-black/50 rounded-full transition-colors"
+          >
+            <X size={24} />
+          </button>
+          <img 
+            src={selectedImage} 
+            alt="Preview" 
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()} 
+          />
+        </div>
+      )}
     </div>
   );
 }
