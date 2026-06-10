@@ -61,8 +61,8 @@ export default function AdminLayout({
     <div className="flex flex-col min-h-screen bg-background text-foreground font-sans pb-20 md:pb-0 md:pl-64">
       {/* Sidebar for Desktop */}
       <aside className="hidden md:flex flex-col fixed inset-y-0 left-0 w-64 bg-white border-r border-zinc-200/80 p-6 z-30">
-        <div className="flex items-center gap-2 mb-8">
-          <div className="relative w-32 h-12">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="relative w-10 h-10">
             <Image 
               src="/logo.png" 
               alt="Bufflab Logo" 
@@ -71,6 +71,7 @@ export default function AdminLayout({
               priority
             />
           </div>
+          <h1 className="font-display font-black text-2xl text-brand-primary tracking-tight">BUFFLAB</h1>
         </div>
 
         <nav className="flex-1 space-y-1">
@@ -118,7 +119,7 @@ export default function AdminLayout({
       {/* Top Header for Mobile */}
       <header className="md:hidden flex items-center justify-between px-6 py-4 bg-white/90 backdrop-blur-md border-b border-zinc-200/80 sticky top-0 z-20">
         <div className="flex items-center gap-2">
-          <div className="relative w-24 h-8">
+          <div className="relative w-8 h-8">
             <Image 
               src="/logo.png" 
               alt="Bufflab Logo" 
@@ -127,6 +128,7 @@ export default function AdminLayout({
               priority
             />
           </div>
+          <h1 className="font-display font-black text-xl text-brand-primary tracking-tight">BUFFLAB</h1>
         </div>
 
         <div className="flex items-center gap-2">

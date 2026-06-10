@@ -116,14 +116,17 @@ export default function PublicInvoice() {
           {/* Shop Header */}
           <div className="flex justify-between items-start pb-6 border-b border-zinc-150">
             <div className="space-y-1">
-              <div className="relative w-32 h-10 mb-1">
-                <Image 
-                  src="/logo.png" 
-                  alt="Bufflab Logo" 
-                  fill
-                  className="object-contain object-left"
-                  priority
-                />
+              <div className="flex items-center gap-2 mb-1">
+                <div className="relative w-10 h-10">
+                  <Image 
+                    src="/logo.png" 
+                    alt="Bufflab Logo" 
+                    fill
+                    className="object-contain object-left"
+                    priority
+                  />
+                </div>
+                <h1 className="font-display font-black text-2xl text-brand-primary tracking-tight">BUFFLAB</h1>
               </div>
               <p className="text-[9px] text-zinc-400 font-bold tracking-widest uppercase">Surabaya Shoecare Specialist</p>
             </div>
