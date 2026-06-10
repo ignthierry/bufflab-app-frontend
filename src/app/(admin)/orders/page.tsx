@@ -97,8 +97,9 @@ export default function OrdersQueue() {
 
           if (newStatus === "ready") {
             const customerName = merged.customer?.name || "Customer";
-            const firstItem = merged.items?.[0];
-            const shoeDesc = firstItem ? `${firstItem.brand} ${firstItem.model || ""} (${firstItem.color})` : "sepatu Anda";
+            const shoeDesc = merged.items && merged.items.length > 0
+              ? merged.items.map((i: any) => `${i.brand} ${i.model || ""} (${i.color})`).join(", ")
+              : "sepatu Anda";
             const whatsapp = merged.customer?.whatsapp_number || "";
             const sisaBayar = merged.total_price - merged.amount_paid;
             const msg = `Kabar baik *${customerName}*! Sepatu kesayangan Anda (*${shoeDesc}*) telah selesai kami rawat. ✨\n` +
@@ -307,11 +308,11 @@ export default function OrdersQueue() {
         {/* Filter Scrollable Tabs */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {[
-            { id: "all", label: "Semua" },
             { id: "pending", label: "Antrean" },
             { id: "processing", label: "Dicuci" },
             { id: "ready", label: "Siap Ambil" },
-            { id: "completed", label: "Selesai" }
+            { id: "completed", label: "Selesai" },
+            { id: "all", label: "Semua" }
           ].map((tab) => (
             <button
               key={tab.id}
